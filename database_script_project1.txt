@@ -1,0 +1,416 @@
+--Creating Tables 
+
+CREATE TABLE students (
+    student_id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    student_number VARCHAR(10) UNIQUE
+);
+
+
+DROP TABLE IF EXISTS fees;
+CREATE TABLE fees (
+    id SERIAL PRIMARY KEY,
+    student_number VARCHAR(20) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    date_paid DATE,
+    total_fee DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20),
+    FOREIGN KEY (student_number) REFERENCES students(student_number)
+);
+
+--adding calculate function 
+CREATE OR REPLACE FUNCTION calculate_outstanding_fees() RETURNS JSON AS $$
+DECLARE
+    result JSON;
+BEGIN
+    SELECT JSON_AGG(
+        JSON_BUILD_OBJECT(
+            'student_number', s.student_number,
+            'name', s.name,
+            'total_fee', f.total_fee,
+            'amount_paid', COALESCE(SUM(f.amount), 0),
+            'outstanding_fee', f.total_fee - COALESCE(SUM(f.amount), 0)
+        )
+    ) INTO result
+    FROM students s
+    LEFT JOIN fees f
+SELECT calculate_outstanding_fees();
+
+
+
+
+DROP TABLE IF EXISTS courses;
+CREATE TABLE courses (
+    course_code VARCHAR(20) PRIMARY KEY,
+    course_name VARCHAR(100) NOT NULL
+);
+
+
+
+DROP TABLE IF EXISTS enrollment;
+CREATE TABLE enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_number VARCHAR(20) NOT NULL,
+    course_code VARCHAR(20) NOT NULL,
+    enrollment_date DATE,
+    FOREIGN KEY (student_number) REFERENCES students(student_number),
+    FOREIGN KEY (course_code) REFERENCES courses(course_code)
+);
+
+DROP TABLE IF EXISTS lecturers;
+CREATE TABLE IF NOT EXISTS lecturers (
+    lecturer_name VARCHAR(100) PRIMARY KEY
+);
+
+
+CREATE TABLE course_assignments (
+    assignment_id SERIAL PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    lecturer_name VARCHAR(100) NOT NULL,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code),
+    FOREIGN KEY (lecturer_name) REFERENCES lecturers(lecturer_name)
+);
+
+
+
+DROP TABLE IF EXISTS teaching_assistants;
+CREATE TABLE IF NOT EXISTS teaching_assistants (
+    ta_name VARCHAR(100) PRIMARY KEY
+);
+
+CREATE TABLE lectures_to_ta_assignment (
+    assignment_id SERIAL PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    ta_name VARCHAR(100) NOT NULL,
+    FOREIGN KEY (course_code) REFERENCES courses(course_code),
+    FOREIGN KEY (ta_name) REFERENCES teaching_assistants(ta_name)
+);
+
+
+--Inserting Data into the tables
+
+
+
+
+INSERT INTO students (name, student_number) VALUES
+('Daniel Akwetey Akunyumu-Tetteh', '10975105'),
+('Ishaan Bhardwaj', '11004272'),
+('Samia Soleimani', '11010910'),
+('Arthur Ebenezer', '11012330'),
+('Kumi Kelvin Gyabaah', '11012343'),
+('Annan Chioma Praise', '11014727'),
+('Mohammed Salihu Hamisu', '11014977'),
+('Daniel Agyin Manford', '11015506'),
+('Pius Oblie', '11018690'),
+('Iddrisu Tahiru', '11021544'),
+('Nyavor Cyril Etornam', '11023595'),
+('David Kwaku Ntow Anno', '11025159'),
+('Agyepong Kwesi', '11038081'),
+('Asare Marvin', '11049492'),
+('Peggy Esinam Somuah', '11049523'),
+('Ampomah Samuel', '11053386'),
+('Andrews Kwarteng Twum', '11105235'),
+('Fiavor Isaac Sedem', '11112276'),
+('Yakubu Tanko Mohammed-Awal', '11116537'),
+('Eririe Jeffery', '11116737'),
+('Kafu Kwame Kemeh', '11116804'),
+('Nyarko Steven Abrokwah', '11117318'),
+('Muhammad Nurul Haqq Munagah', '11117536'),
+('Bernardine Adusei-Okrah', '11123762'),
+('Maame Afua Ayisibea Ayisi', '11139245'),
+('Ansiogya Philemon Kwabena', '11139828'),
+('Antwi Samuel Kojo Anafi', '11164744'),
+('Nkansah Boadu Tabi', '11170350'),
+('Wenide Isaac Atta', '11172376'),
+('John Tenkorang Anim', '11208328'),
+('Abubakar Latifah', '11209640'),
+('Attu Samuel Idana', '11213307'),
+('Adorboe Prince Philips', '11218951'),
+('Ninson Obed', '11238291'),
+('Anewah Vincent', '11246366'),
+('Quansah Jeffery', '11252855'),
+('Nuku-Tagbor Joshua', '11252857'),
+('Desmond Afelete Kamasah', '11253931'),
+('Fordjour Edward John', '11254079'),
+('Kudiabor Jonathan Kwabena Ewenam', '11254301'),
+('Abena Nhyira Nsaako', '11254405'),
+('Dedoo Donatus Dodzi', '11262592'),
+('Ayertey Vanessa Esinam', '11264010'),
+('Nyayun Prince', '11275876'),
+('David Tetteh Ankrah', '11285635'),
+('Sena Anyomi', '11292620'),
+('Amponsah Jonathan Boadu', '11293871'),
+('Asare Baffour King David', '11296641'),
+('Amevenku K. Mawuli', '11296662'),
+('Isaac Nii Nortey Barnor', '11297849'),
+('Nana K. Fosu Asamoah', '11305528'),
+('Yasmeen Xoladem Korkor Doku', '11330446'),
+('Matthew Kotey Mensah', '11332163'),
+('Fall F. Galas', '11333321'),
+('Awal Mohammed', '11334401'),
+('Ahmed Fareed Opare', '11338323'),
+('Derrick Amponsah Amponsah', '11347946'),
+('Freda Elikplim Apetsi', '11348310'),
+('Dabanka Hayet Maame Adwoa Gyasiwaa', '11353826'),
+('Edward Opoku Agyemang', '11356825'),
+('Nana Kwasi Kwakye', '11358243');
+
+ALTER TABLE students ADD COLUMN email VARCHAR(255);
+
+UPDATE students SET email = 'edward.opokuagyemang@ug.st.edu.gh' WHERE student_number = '10975105';
+UPDATE students SET email = 'ishaan.bhardwaj@ug.st.edu.gh' WHERE student_number = '11004272';
+UPDATE students SET email = 'samia.soleiman@ug.st.edu.gh' WHERE student_number = '11010910';
+UPDATE students SET email = 'ebenezer.haydenarthur@ug.st.edu.gh' WHERE student_number = '11012330';
+UPDATE students SET email = 'kumi.kelvingyabaah@ug.st.edu.gh' WHERE student_number = '11012343';
+UPDATE students SET email = 'mohammed.salihuhamisu@ug.st.edu.gh' WHERE student_number = '11014977';
+UPDATE students SET email = 'daniel.agyinmanford@ug.st.edu.gh' WHERE student_number = '11015506';
+UPDATE students SET email = 'pius.oblie@ug.st.edu.gh' WHERE student_number = '11018690';
+UPDATE students SET email = 'iddrisu.tahiru@ug.st.edu.gh' WHERE student_number = '11021544';
+UPDATE students SET email = 'nyavor.cyrilmorkporkpor@ug.st.edu.gh' WHERE student_number = '11023595';
+UPDATE students SET email = 'david.ntowanno@ug.st.edu.gh' WHERE student_number = '11025159';
+UPDATE students SET email = 'agyepong.kwesi_asante@ug.st.edu.gh' WHERE student_number = '11038081';
+UPDATE students SET email = 'asare.marvin@ug.st.edu.gh' WHERE student_number = '11049492';
+UPDATE students SET email = 'peggy.esinamsomuah@ug.st.edu.gh' WHERE student_number = '11049523';
+UPDATE students SET email = 'ampomah.samuel@ug.st.edu.gh' WHERE student_number = '11053386';
+UPDATE students SET email = 'kwarteng.andrewstwum@ug.st.edu.gh' WHERE student_number = '11105235';
+UPDATE students SET email = 'fiavor.isaacsedem@ug.st.edu.gh' WHERE student_number = '11112276';
+UPDATE students SET email = 'mohammed.awaltanko@ug.st.edu.gh' WHERE student_number = '11116537';
+UPDATE students SET email = 'jeffrey.eririe@ug.st.edu.gh' WHERE student_number = '11116737';
+UPDATE students SET email = 'kafu.kemeh@ug.st.edu.gh' WHERE student_number = '11116804';
+UPDATE students SET email = 'steven.nyarkoabronkwah@ug.st.edu.gh' WHERE student_number = '11117318';
+UPDATE students SET email = 'muhammed.nhaqq@ug.st.edu.gh' WHERE student_number = '11117536';
+UPDATE students SET email = 'bernadine.aduseiokrah@ug.st.edu.gh' WHERE student_number = '11123762';
+UPDATE students SET email = 'maame.afuaayisibeaayisi@ug.st.edu.gh' WHERE student_number = '11139245';
+UPDATE students SET email = 'ansrogya.philemon@ug.st.edu.gh' WHERE student_number = '11139828';
+UPDATE students SET email = 'antwi.samuelkojoanafi@ug.st.edu.gh' WHERE student_number = '11164744';
+UPDATE students SET email = 'nkansah.boadutabi@ug.st.edu.gh' WHERE student_number = '11170350';
+UPDATE students SET email = 'wenide.isaacatta@ug.st.edu.gh' WHERE student_number = '11172376';
+UPDATE students SET email = 'john.animtenkorang@ug.st.edu.gh' WHERE student_number = '11208328';
+UPDATE students SET email = 'abubakar.latifah@ug.st.edu.gh' WHERE student_number = '11209640';
+UPDATE students SET email = 'attu.samuelidana@ug.st.edu.gh' WHERE student_number = '11213307';
+UPDATE students SET email = 'adorboe.princephilips@ug.st.edu.gh' WHERE student_number = '11218951';
+UPDATE students SET email = 'ninson.obed@ug.st.edu.gh' WHERE student_number = '11238291';
+UPDATE students SET email = 'vincent.anewah@ug.st.edu.gh' WHERE student_number = '11246366';
+UPDATE students SET email = 'quansah.jeffrey@ug.st.edu.gh' WHERE student_number = '11252855';
+UPDATE students SET email = 'nuku-tagbor.joshua@ug.st.edu.gh' WHERE student_number = '11252857';
+UPDATE students SET email = 'desmond.afletekamasah@ug.st.edu.gh' WHERE student_number = '11253931';
+UPDATE students SET email = 'john.edwardfodjour@ug.st.edu.gh' WHERE student_number = '11254079';
+UPDATE students SET email = 'kudiabor.jonathanewenam@ug.st.edu.gh' WHERE student_number = '11254301';
+UPDATE students SET email = 'abena.nhyiransaako@ug.st.edu.gh' WHERE student_number = '11254405';
+UPDATE students SET email = 'dedoo.donatusdodzi@ug.st.edu.gh' WHERE student_number = '11262592';
+UPDATE students SET email = 'ayertey.vanessaesinam@ug.st.edu.gh' WHERE student_number = '11264010';
+UPDATE students SET email = 'nyayun.prince@ug.st.edu.gh' WHERE student_number = '11275876';
+UPDATE students SET email = 'david.tettehankrah@ug.st.edu.gh' WHERE student_number = '11285635';
+UPDATE students SET email = 'sena.delaseanyomi@ug.st.edu.gh' WHERE student_number = '11292620';
+UPDATE students SET email = 'amponsah.jonathanboadu@ug.st.edu.gh' WHERE student_number = '11293871';
+UPDATE students SET email = 'asare.baffourkingdavid@ug.st.edu.gh' WHERE student_number = '11296641';
+UPDATE students SET email = 'mawuli.kwekuamevenku@ug.st.edu.gh' WHERE student_number = '11296662';
+UPDATE students SET email = 'isaac.niinorteybarnor@ug.st.edu.gh' WHERE student_number = '11297849';
+UPDATE students SET email = 'nana.kwesiewadie@ug.st.edu.gh' WHERE student_number = '11305528';
+UPDATE students SET email = 'yasmeen.xolademdoku@ug.st.edu.gh' WHERE student_number = '11330446';
+UPDATE students SET email = 'matthew.koteymensah@ug.st.edu.gh' WHERE student_number = '11332163';
+UPDATE students SET email = 'fall.f.galas@ug.st.edu.gh' WHERE student_number = '11333321';
+UPDATE students SET email = 'awal.mohammed@ug.st.edu.gh' WHERE student_number = '11334401';
+UPDATE students SET email = 'ahmed.fareedopare@ug.st.edu.gh' WHERE student_number = '11338323';
+UPDATE students SET email = 'derrick.ampomahamponsah@ug.st.edu.gh' WHERE student_number = '11347946';
+UPDATE students SET email = 'apetsi.fredaelikplim@ug.st.edu.gh' WHERE student_number = '11348310';
+UPDATE students SET email = 'hayet.maamedabanka@ug.st.edu.gh' WHERE student_number = '11353826';
+UPDATE students SET email = 'edward.opokuagyemang@ug.st.edu.gh' WHERE student_number = '11356825';
+UPDATE students SET email = 'nana.kwesiewadie@ug.st.edu.gh' WHERE student_number = '11358243';
+UPDATE students SET email = 'annan.chiomapraise@ug.st.edu.gh' WHERE student_number = '11014727';
+
+
+
+INSERT INTO fees (student_number, amount, date_paid, total_fee, status) VALUES
+('10975105', 500.00, '2024-01-10', 1000.00, 'paid'),
+('11004272', 300.00, '2024-02-15', 1000.00, 'paid'),
+('11010910', 200.00, '2024-03-20', 1000.00, 'paid'),
+('11012330', 400.00, '2024-04-10', 1000.00, 'paid'),
+('11012343', 600.00, '2024-05-15', 1000.00, 'paid'),
+('11014727', 450.00, '2024-01-20', 1000.00, 'paid'),
+('11014977', 350.00, '2024-02-25', 1000.00, 'paid'),
+('11015506', 500.00, '2024-03-30', 1000.00, 'paid'),
+('11018690', 250.00, '2024-04-05', 1000.00, 'paid'),
+('11021544', 300.00, '2024-05-10', 1000.00, 'paid'),
+('11023595', 700.00, '2024-01-15', 1000.00, 'paid'),
+('11025159', 200.00, '2024-02-20', 1000.00, 'paid'),
+('11038081', 400.00, '2024-03-25', 1000.00, 'paid'),
+('11049492', 600.00, '2024-04-30', 1000.00, 'paid'),
+('11049523', 500.00, '2024-05-05', 1000.00, 'paid'),
+('11053386', 300.00, '2024-01-18', 1000.00, 'paid'),
+('11105235', 200.00, '2024-02-22', 1000.00, 'paid'),
+('11112276', 400.00, '2024-03-28', 1000.00, 'paid'),
+('11116537', 600.00, '2024-04-02', 1000.00, 'paid'),
+('11116737', 500.00, '2024-05-07', 1000.00, 'paid'),
+('11116804', 300.00, '2024-01-20', 1000.00, 'paid'),
+('11117318', 200.00, '2024-02-25', 1000.00, 'paid'),
+('11117536', 400.00, '2024-03-30', 1000.00, 'paid'),
+('11123762', 600.00, '2024-04-05', 1000.00, 'paid'),
+('11139245', 500.00, '2024-05-10', 1000.00, 'paid'),
+('11139828', 300.00, '2024-01-22', 1000.00, 'paid'),
+('11164744', 200.00, '2024-02-27', 1000.00, 'paid'),
+('11170350', 400.00, '2024-03-05', 1000.00, 'paid'),
+('11172376', 600.00, '2024-04-10', 1000.00, 'paid'),
+('11208328', 500.00, '2024-05-15', 1000.00, 'paid'),
+('11209640', 300.00, '2024-01-25', 1000.00, 'paid'),
+('11213307', 200.00, '2024-02-28', 1000.00, 'paid'),
+('11218951', 400.00, '2024-03-10', 1000.00, 'paid'),
+('11238291', 600.00, '2024-04-15', 1000.00, 'paid'),
+('11246366', 500.00, '2024-05-20', 1000.00, 'paid'),
+('11252855', 300.00, '2024-01-28', 1000.00, 'paid'),
+('11252857', 200.00, '2024-02-30', 1000.00, 'paid'),
+('11253931', 400.00, '2024-03-15', 1000.00, 'paid'),
+('11254079', 600.00, '2024-04-20', 1000.00, 'paid'),
+('11254301', 500.00, '2024-05-25', 1000.00, 'paid'),
+('11254405', 300.00, '2024-01-30', 1000.00, 'paid'),
+('11262592', 200.00, '2024-03-02', 1000.00, 'paid'),
+('11264010', 400.00, '2024-03-17', 1000.00, 'paid'),
+('11275876', 600.00, '2024-04-22', 1000.00, 'paid'),
+('11285635', 500.00, '2024-05-27', 1000.00, 'paid'),
+('11292620', 300.00, '2024-02-02', 1000.00, 'paid'),
+('11293871', 200.00, '2024-03-04', 1000.00, 'paid'),
+('11296641', 400.00, '2024-03-19', 1000.00, 'paid'),
+('11296662', 600.00, '2024-04-24', 1000.00, 'paid'),
+('11297849', 500.00, '2024-05-29', 1000.00, 'paid'),
+('11305528', 300.00, '2024-02-04', 1000.00, 'paid'),
+('11330446', 200.00, '2024-03-06', 1000.00, 'paid'),
+('11332163', 400.00, '2024-03-21', 1000.00, 'paid'),
+('11333321', 600.00, '2024-04-26', 1000.00, 'paid'),
+('11334401', 500.00, '2024-05-31', 1000.00, 'paid'),
+('11338323', 300.00, '2024-02-06', 1000.00, 'paid'),
+('11347946', 200.00, '2024-03-08', 1000.00, 'paid'),
+('11348310', 400.00, '2024-03-23', 1000.00, 'paid'),
+('11353826', 600.00, '2024-04-28', 1000.00, 'paid'),
+('11356825', 750.00, '2024-03-20', 1000.00, 'paid'),
+-- Pending fees
+('11025159', 200.00, '2024-02-20', 1000.00, 'pending'),
+
+
+
+
+INSERT INTO courses (course_code, course_name) VALUES
+('CPEN 202', 'Computer system design'),
+('CPEN 204', 'Data structures and Algorithms'),
+('CPEN 206', 'Linear circuits'),
+('CPEN 208', 'Software Engineering'),
+('CPEN 212', 'Data Communications'),
+('SENG202', 'Differential equations'),
+('CBAS210', 'Academic Writing II');
+
+
+
+
+INSERT INTO enrollment (student_number, course_code, enrollment_date) VALUES
+-- CPEN 202
+('10975105', 'CPEN 202', '2024-01-10'),
+('11004272', 'CPEN 202', '2024-01-10'),
+('11010910', 'CPEN 202', '2024-01-10'),
+('11053386', 'CPEN 202', '2024-01-10'),
+('11105235', 'CPEN 202', '2024-01-10'),
+('11208328', 'CPEN 202', '2024-01-10'),
+('11209640', 'CPEN 202', '2024-01-10'),
+('11275876', 'CPEN 202', '2024-01-10'),
+('11285635', 'CPEN 202', '2024-01-10'),
+('11348310', 'CPEN 202', '2024-01-10'),
+('11353826', 'CPEN 202', '2024-01-10'),
+-- CPEN 204
+('11012330', 'CPEN 204', '2024-02-15'),
+('11012343', 'CPEN 204', '2024-02-15'),
+('11112276', 'CPEN 204', '2024-02-15'),
+('11116537', 'CPEN 204', '2024-02-15'),
+('11213307', 'CPEN 204', '2024-02-15'),
+('11218951', 'CPEN 204', '2024-02-15'),
+('11292620', 'CPEN 204', '2024-02-15'),
+('11293871', 'CPEN 204', '2024-02-15'),
+('11356825', 'CPEN 204', '2024-02-15'),
+-- CPEN 206
+('11014727', 'CPEN 206', '2024-03-20'),
+('11014977', 'CPEN 206', '2024-03-20'),
+('11116737', 'CPEN 206', '2024-03-20'),
+('11116804', 'CPEN 206', '2024-03-20'),
+('11238291', 'CPEN 206', '2024-03-20'),
+('11246366', 'CPEN 206', '2024-03-20'),
+('11296641', 'CPEN 206', '2024-03-20'),
+('11296662', 'CPEN 206', '2024-03-20'),
+-- CPEN 208
+('11015506', 'CPEN 208', '2024-04-10'),
+('11018690', 'CPEN 208', '2024-04-10'),
+('11117318', 'CPEN 208', '2024-04-10'),
+('11117536', 'CPEN 208', '2024-04-10'),
+('11252855', 'CPEN 208', '2024-04-10'),
+('11252857', 'CPEN 208', '2024-04-10'),
+('11297849', 'CPEN 208', '2024-04-10'),
+('11305528', 'CPEN 208', '2024-04-10'),
+-- CPEN 212
+('11021544', 'CPEN 212', '2024-05-15'),
+('11023595', 'CPEN 212', '2024-05-15'),
+('11123762', 'CPEN 212', '2024-05-15'),
+('11139245', 'CPEN 212', '2024-05-15'),
+('11253931', 'CPEN 212', '2024-05-15'),
+('11254079', 'CPEN 212', '2024-05-15'),
+('11330446', 'CPEN 212', '2024-05-15'),
+('11332163', 'CPEN 212', '2024-05-15'),
+-- SENG202
+('11025159', 'SENG202', '2024-01-20'),
+('11038081', 'SENG202', '2024-01-20'),
+('11139828', 'SENG202', '2024-01-20'),
+('11164744', 'SENG202', '2024-01-20'),
+('11254301', 'SENG202', '2024-01-20'),
+('11254405', 'SENG202', '2024-01-20'),
+('11333321', 'SENG202', '2024-01-20'),
+('11334401', 'SENG202', '2024-01-20'),
+-- CBAS210
+('11049492', 'CBAS210', '2024-02-25'),
+('11049523', 'CBAS210', '2024-02-25'),
+('11170350', 'CBAS210', '2024-02-25'),
+('11172376', 'CBAS210', '2024-02-25'),
+('11262592', 'CBAS210', '2024-02-25'),
+('11264010', 'CBAS210', '2024-02-25'),
+('11338323', 'CBAS210', '2024-02-25'),
+('11347946', 'CBAS210', '2024-02-25');
+
+
+INSERT INTO lecturers (lecturer_name) VALUES
+('Agyare Debrah'),
+('Dr. Margaret Ansah Richardson'),
+('Dr. Godfrey Augustus Mills'),
+('Mr. John Asiammah'),
+('Dr. Isaac Adjaye Aboagye'),
+('Dr. John Kutor'),
+('Dr. Percy Okae');
+
+
+
+INSERT INTO course_assignments (course_code, lecturer_name) VALUES
+('CPEN 202', 'Agyare Debrah'),
+('CPEN 204', 'Dr. Margaret Ansah Richardson'),
+('CPEN 206', 'Dr. Godfrey Augustus Mills'),
+('CPEN 208', 'Mr. John Asiammah'),
+('CPEN 212', 'Dr. Isaac Adjaye Aboagye'),
+('SENG202', 'Dr. John Kutor'),
+('CBAS210', 'Dr. Percy Okae');
+
+
+
+
+INSERT INTO teaching_assistants (ta_name) VALUES
+('Bamzy'),
+('Foster'),
+('Hakeem'),
+('Samed'),
+('Ben'),
+('Kevin');
+
+
+
+
+INSERT INTO lectures_to_ta_assignment (course_code, ta_name) VALUES
+('CPEN 202', 'Bamzy'),
+('CPEN 204', 'Foster'),
+('CPEN 206', 'Hakeem'),
+('CPEN 208', 'Foster'),
+('CPEN 212', 'Samed'),
+('SENG202', 'Ben'),
+('CBAS210', 'Kevin');
+
+
